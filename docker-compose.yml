@@ -40,16 +40,6 @@ services:
           cpus: '0.4'
           memory: "200MB"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_LISTEN_PORT: 5050
-      network_mode: host
-    depends_on:
-      - db
-
   nginx:
     image: nginx:latest
     volumes:
@@ -67,5 +57,5 @@ services:
 
 networks:
   default:
-    driver: host
+    driver: bridge
     name: rinha-nginx-2024q1
