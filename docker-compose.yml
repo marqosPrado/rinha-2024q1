@@ -8,11 +8,11 @@ services:
       - "8080:8080"
     depends_on:
       - db
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '0.4'
-#          memory: "160MB"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: "160MB"
 
   api02:
     <<: *api01
@@ -34,11 +34,11 @@ services:
     volumes:
       - ./script.sql:/docker-entrypoint-initdb.d/script.sql
     command: postgres -c checkpoint_timeout=600 -c max_wal_size=4096
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '0.4'
-#          memory: "200MB"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: "200MB"
 
   nginx:
     image: nginx:latest
@@ -49,11 +49,11 @@ services:
       - api02
     ports:
       - "9999:9999"
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '0.3'
-#          memory: "30MB"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: "30MB"
 
 networks:
   default:
