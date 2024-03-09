@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 @Table(name = "clientes")
 public class Cliente {
     @Id
-    private Integer id;
+    private Long id;
     @Column
     private Integer limite;
     @Column
@@ -17,16 +17,16 @@ public class Cliente {
 
     public Cliente() {}
 
-    public Cliente(int id, int limite) {
+    public Cliente(Long id, Integer limite) {
         this.id = id;
         this.limite = limite;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

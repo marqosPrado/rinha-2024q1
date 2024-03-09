@@ -1,6 +1,5 @@
 package br.com.marcosprado.domain;
 
-import br.com.marcosprado.dto.ResponseTransactionStatementDTO;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -10,11 +9,11 @@ import java.time.LocalDateTime;
 public class Transacao {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
     @Column
     private Integer valor;
     @Column(name = "cliente_id")
-    private Integer clienteId;
+    private Long clienteId;
     @Column
     private char tipo;
     @Column
@@ -24,7 +23,7 @@ public class Transacao {
 
     public Transacao(
             Integer valor,
-            Integer clienteId,
+            Long clienteId,
             char tipo,
             String descricao,
             LocalDateTime realizadaEm
@@ -37,14 +36,7 @@ public class Transacao {
     }
     public Transacao() {}
 
-    public static ResponseTransactionStatementDTO toStatement(Transacao transacao) {
-        return new ResponseTransactionStatementDTO(
-                transacao.getValor(),
-                transacao.getTipo(),
-                transacao.getDescricao(),
-                transacao.getRealizadaEm());
-    }
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
@@ -56,11 +48,11 @@ public class Transacao {
         this.valor = valor;
     }
 
-    public Integer getClienteId() {
+    public Long getClienteId() {
         return clienteId;
     }
 
-    public void setClienteId(Integer clienteId) {
+    public void setClienteId(Long clienteId) {
         this.clienteId = clienteId;
     }
 

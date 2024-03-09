@@ -1,5 +1,5 @@
 CREATE UNLOGGED TABLE clientes (
-    id INTEGER PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     limite INTEGER NOT NULL,
     saldo INTEGER NOT NULL DEFAULT 0
 );
@@ -7,7 +7,7 @@ CREATE UNLOGGED TABLE clientes (
 CREATE UNLOGGED TABLE transacoes (
     id SERIAL PRIMARY KEY,
     valor INTEGER NOT NULL,
-    cliente_id INTEGER NOT NULL,
+    cliente_id BIGINT NOT NULL,
     tipo CHAR(1) NOT NULL,
     descricao VARCHAR(10) NOT NULL,
     realizada_em TIMESTAMP,

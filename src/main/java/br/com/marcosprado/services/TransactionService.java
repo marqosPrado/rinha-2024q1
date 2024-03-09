@@ -1,6 +1,5 @@
 package br.com.marcosprado.services;
 
-import br.com.marcosprado.domain.Cliente;
 import br.com.marcosprado.domain.Transacao;
 import br.com.marcosprado.dto.RequestTransactionDTO;
 import br.com.marcosprado.dto.ResponseTransactionDTO;
@@ -9,13 +8,15 @@ import br.com.marcosprado.exceptions.InsufficientLimitException;
 import br.com.marcosprado.exceptions.InvalidArgumentException;
 import br.com.marcosprado.repositories.ClienteRepository;
 import br.com.marcosprado.repositories.TransactionRepository;
+import io.quarkus.hibernate.reactive.panache.common.WithTransaction;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.unchecked.Unchecked;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.LockModeType;
-import jakarta.transaction.Transactional;
+import org.jboss.resteasy.reactive.RestResponse;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @ApplicationScoped
 public class TransactionService {
@@ -24,41 +25,42 @@ public class TransactionService {
     @Inject
     ClienteRepository clienteRepository;
 
-    @Transactional
-    public ResponseTransactionDTO createCreditTransaction(Integer clientId, RequestTransactionDTO transaction) {
-        Cliente client = findClientById(clientId)
-                .orElseThrow(ClientNotFoundException::new);
-
-        client.setSaldo(client.getSaldo() + transaction.valor());
-        clienteRepository.persist(client);
-
-        Transacao transacao = createTransaction(clientId, transaction);
-        transactionRepository.persist(transacao);
-        return new ResponseTransactionDTO(client.getLimite(), client.getSaldo());
+    @WithTransaction
+    public Uni<RestResponse<ResponseTransactionDTO>> createCreditTransaction(Long clientId,
+                                                                    RequestTransactionDTO transaction) {
+        return clienteRepository.findById(clientId, LockModeType.PESSIMISTIC_WRITE)
+                .onItem().ifNull().failWith(ClientNotFoundException::new)
+                .call(client -> {
+                    var transacao = createTransaction(clientId, transaction);
+                    client.setSaldo(client.getSaldo() + transaction.valor());
+                    return transactionRepository.persist(transacao);
+                })
+                .map(client -> {
+                    var response = new ResponseTransactionDTO(client.getLimite(), client.getSaldo());
+                    return RestResponse.ResponseBuilder.ok(response).build();
+                });
     }
 
-    @Transactional
-    public ResponseTransactionDTO createDebitTransaction(Integer clientId, RequestTransactionDTO transaction) {
-        Cliente client = findClientById(clientId)
-                .orElseThrow(ClientNotFoundException::new);
-
-        client.setSaldo(client.getSaldo() - transaction.valor());
-
-        if (client.getLimite() + client.getSaldo() < 0)
-            throw new InsufficientLimitException();
-
-        clienteRepository.persist(client);
-
-        Transacao transacao = createTransaction(clientId, transaction);
-        transactionRepository.persist(transacao);
-        return new ResponseTransactionDTO(client.getLimite(), client.getSaldo());
+    @WithTransaction
+    public Uni<RestResponse<ResponseTransactionDTO>> createDebitTransaction(Long clientId,
+                                                              RequestTransactionDTO transaction) {
+        return clienteRepository.findById(clientId, LockModeType.PESSIMISTIC_WRITE)
+                .onItem().ifNull().failWith(ClientNotFoundException::new)
+                .call(Unchecked.function(client -> {
+                    var transacao = createTransaction(clientId, transaction);
+                    if (client.getSaldo() - transaction.valor() < -client.getLimite()) {
+                        throw new InsufficientLimitException();
+                    }
+                    client.setSaldo(client.getSaldo() - transaction.valor());
+                    return transactionRepository.persist(transacao);
+                }))
+                .map(client -> {
+                    var response = new ResponseTransactionDTO(client.getLimite(), client.getSaldo());
+                    return RestResponse.ResponseBuilder.ok(response).build();
+                });
     }
 
-    private Optional<Cliente> findClientById(Integer clientId) {
-        return clienteRepository.findByIdOptional(clientId.longValue(), LockModeType.PESSIMISTIC_WRITE);
-    }
-
-    private Transacao createTransaction(Integer customerId, RequestTransactionDTO transaction) {
+    private Transacao createTransaction(Long customerId, RequestTransactionDTO transaction) {
         validTransaction(transaction);
         Transacao transacao = new Transacao();
         transacao.setValor(transaction.valor());
