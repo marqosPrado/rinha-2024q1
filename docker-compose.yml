@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   api01: &api01
-    image: rinha-api-2024
+    image: marqosprado/rinha-quarkus
     hostname: api01
     ports:
       - "8080:8080"
